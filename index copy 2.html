@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2026 Photobooth - No Gaps Logic</title>
+    <style>
+        :root { --blue: #009dff; --bg: #121212; }
+        body { font-family: 'Segoe UI', sans-serif; background: #333; color: white; margin: 0; display: flex; justify-content: center; }
+        
+        .main-container { display: flex; flex-direction: row; padding: 20px; gap: 20px; width: 100%; max-width: 1400px; }
+        @media (max-width: 800px) { .main-container { flex-direction: column; } .sidebar { width: 100% !important; } }
+
+        .sidebar { width: 320px; background: #222; padding: 20px; border-radius: 15px; flex-shrink: 0; }
+        .viewport { flex-grow: 1; text-align: center; }
+
+        .slot-btn { background: #444; padding: 15px; margin-bottom: 10px; border-radius: 8px; cursor: pointer; border: 2px solid transparent; }
+        .slot-btn.active { border-color: var(--blue); background: #2d3e4d; }
+
+        canvas { width: 100%; height: auto; background: #000; border-radius: 10px; cursor: move; touch-action: none; }
+        
+        .controls { margin-top: 20px; padding: 15px; background: #111; border-radius: 10px; }
+        input[type="range"] { width: 100%; height: 25px; cursor: pointer; }
+        
+        .btn-action { background: var(--blue); color: white; border: none; padding: 15px; width: 100%; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; font-size: 16px; }
+        label { display: block; margin-bottom: 10px; color: #aaa; font-size: 14px; }
+    </style>
+</head>
+<body>
+
+<div class="main-container">
+    <div class="sidebar">
+        <h2>SETTINGS</h2>
+        <div id="slot-list">
+            <div class="slot-btn active" onclick="selectSlot(0)">PHOTO 1 (Main)</div>
+            <div class="slot-btn" onclick="selectSlot(1)">PHOTO 2</div>
+            <div class="slot-btn" onclick="selectSlot(2)">PHOTO 3</div>
+            <div class="slot-btn" onclick="selectSlot(3)">PHOTO 4</div>
+        </div>
+
+        <input type="file" id="fileInput" style="display:none" onchange="handleFile(event)">
+        <button class="btn-action" onclick="document.getElementById('fileInput').click()">UPLOAD IMAGE</button>
+
+        <div class="controls">
+            <label>ENLARGE / ZOOM</label>
+            <input type="range" id="zoomRange" step="0.001" value="1">
+            <button class="btn-action" style="background:#555" onclick="download()">DOWNLOAD FINAL</button>
+        </div>
+        <p style="font-size: 11px; color: #888; margin-top: 15px;">Note: Images are locked to the frame edges to prevent gaps.</p>
+    </div>
+
+    <div class="viewport">
+        <canvas id="boothCanvas" width="1080" height="720"></canvas>
+    </div>
+</div>
+
+<script>
+    const canvas = document.getElementById('boothCanvas');
+    const ctx = canvas.getContext('2d');
+    const zoomRange = document.getElementById('zoomRange');
+    const template = new Image();
+    template.src = 'PHOTOBOOTH.PNG';
+
+    let activeIdx = 0;
+    let photos = [null, null, null, null];
+
+    // Coordinates of the "holes" in your PHOTOBOOTH.PNG
+    const slots = [
+        { x: 45,  y: 40,  w: 615, h: 410 }, // Big Photo
+        { x: 40,  y: 455, w: 320, h: 285 }, // Small 1
+        { x: 380, y: 455, w: 320, h: 285 }, // Small 2
+        { x: 720, y: 455, w: 320, h: 285 }  // Small 3
+    ];
+
+    let states = slots.map(s => ({ x: s.x, y: s.y, scale: 1, minScale: 1 }));
+
+    template.onload = render;
+
+    function selectSlot(i) {
+        activeIdx = i;
+        document.querySelectorAll('.slot-btn').forEach((b,idx) => b.classList.toggle('active', idx===i));
+        zoomRange.min = states[i].minScale;
+        zoomRange.max = states[i].minScale * 3;
+        zoomRange.value = states[i].scale;
+    }
+
+    function handleFile(e) {
+        const file = e.target.files[0];
+        if(!file) return;
+        const reader = new FileReader();
+        reader.onload = (f) => {
+            const img = new Image();
+            img.onload = () => {
+                photos[activeIdx] = img;
+                calculateMinScale(activeIdx);
+                render();
+            };
+            img.src = f.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function calculateMinScale(idx) {
+        const img = photos[idx];
+        const slot = slots[idx];
+        
+        // Find scale that fits the hole perfectly (no gaps)
+        const scaleW = slot.w / img.width;
+        const scaleH = slot.h / img.height;
+        const minS = Math.max(scaleW, scaleH);
+        
+        states[idx].minScale = minS;
+        states[idx].scale = minS;
+        states[idx].x = slot.x;
+        states[idx].y = slot.y;
+        
+        zoomRange.min = minS;
+        zoomRange.max = minS * 3; // Allow 3x zoom from fit
+        zoomRange.value = minS;
+    }
+
+    function constrainPosition(idx) {
+        const s = states[idx];
+        const slot = slots[idx];
+        const img = photos[idx];
+        if(!img) return;
+
+        const currW = img.width * s.scale;
+        const currH = img.height * s.scale;
+
+        // Prevent dragging past Left/Right edges
+        if (s.x > slot.x) s.x = slot.x;
+        if (s.x + currW < slot.x + slot.w) s.x = slot.x + slot.w - currW;
+
+        // Prevent dragging past Top/Bottom edges
+        if (s.y > slot.y) s.y = slot.y;
+        if (s.y + currH < slot.y + slot.h) s.y = slot.y + slot.h - currH;
+    }
+
+    function render() {
+        ctx.clearRect(0,0, canvas.width, canvas.height);
+        
+        photos.forEach((img, i) => {
+            if(!img) return;
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(slots[i].x, slots[i].y, slots[i].w, slots[i].h);
+            ctx.clip();
+
+            const s = states[i];
+            const drawW = img.width * s.scale;
+            const drawH = img.height * s.scale;
+            
+            ctx.drawImage(img, s.x, s.y, drawW, drawH);
+            ctx.restore();
+        });
+
+        ctx.drawImage(template, 0, 0, canvas.width, canvas.height);
+    }
+
+    // Interaction
+    let isDown = false; let lx, ly;
+
+    const getPos = (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const cx = e.touches ? e.touches[0].clientX : e.clientX;
+        const cy = e.touches ? e.touches[0].clientY : e.clientY;
+        return {
+            x: (cx - rect.left) * (canvas.width / rect.width),
+            y: (cy - rect.top) * (canvas.height / rect.height)
+        };
+    };
+
+    const start = (e) => { isDown = true; const p = getPos(e); lx = p.x; ly = p.y; };
+    const end = () => isDown = false;
+    const move = (e) => {
+        if(!isDown || !photos[activeIdx]) return;
+        const p = getPos(e);
+        states[activeIdx].x += (p.x - lx);
+        states[activeIdx].y += (p.y - ly);
+        
+        constrainPosition(activeIdx); // Apply gap prevention
+        
+        lx = p.x; ly = p.y;
+        render();
+    };
+
+    canvas.addEventListener('mousedown', start);
+    window.addEventListener('mouseup', end);
+    window.addEventListener('mousemove', move);
+    canvas.addEventListener('touchstart', start, {passive: false});
+    window.addEventListener('touchend', end);
+    canvas.addEventListener('touchmove', (e) => { e.preventDefault(); move(e); }, {passive: false});
+
+    zoomRange.oninput = (e) => {
+        const oldScale = states[activeIdx].scale;
+        const newScale = parseFloat(e.target.value);
+        
+        // Zoom toward the center of the slot
+        const slot = slots[activeIdx];
+        const centerX = slot.x + slot.w / 2;
+        const centerY = slot.y + slot.h / 2;
+
+        states[activeIdx].x = centerX - (centerX - states[activeIdx].x) * (newScale / oldScale);
+        states[activeIdx].y = centerY - (centerY - states[activeIdx].y) * (newScale / oldScale);
+        states[activeIdx].scale = newScale;
+
+        constrainPosition(activeIdx); // Ensure no gaps after zoom
+        render();
+    };
+
+    function download() {
+        const link = document.createElement('a');
+        link.download = 'photobooth-2026.png';
+        link.href = canvas.toDataURL('image/png', 1.0);
+        link.click();
+    }
+</script>
+
+</body>
+</html>

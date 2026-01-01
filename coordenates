@@ -1,0 +1,7 @@
+   // Coordinates of the "holes" in your PHOTOBOOTH.PNG
+    const slots = [
+        { x: 45,  y: 40,  w: 615, h: 410 }, // Big Photo
+        { x: 40,  y: 455, w: 320, h: 285 }, // Small 1
+        { x: 380, y: 455, w: 320, h: 285 }, // Small 2
+        { x: 720, y: 455, w: 320, h: 285 }  // Small 3
+    ];
