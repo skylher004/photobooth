@@ -1,29 +1,74 @@
-  :root { --blue: #009dff; --panel: #252525; }
-        body { font-family: sans-serif; background: #1a1a1a; color: white; margin: 0; display: flex; justify-content: center; }
-        
-        .main-container { display: flex; padding: 20px; gap: 20px; width: 100%; max-width: 1300px; }
-        @media (max-width: 900px) { .main-container { flex-direction: column; } .sidebar { width: 100% !important; } }
 
-        .sidebar { width: 300px; background: var(--panel); padding: 20px; border-radius: 12px; height: fit-content; }
-        .viewport { flex-grow: 1; text-align: center; }
+    :root { --blue: #009dff; --bg: #121212; --panel: #252525; }
+    
+    body { 
+        font-family: sans-serif; 
+        background: #1a1a1a; 
+        color: white; 
+        margin: 0; 
+        padding: 0;
+        display: flex; 
+        justify-content: center; 
+        min-height: 100vh;
+    }
+    
+    .main-container { 
+        display: flex; 
+        padding: 20px; 
+        gap: 20px; 
+        width: 100%; 
+        max-width: 1300px; 
+        box-sizing: border-box;
+    }
 
-        canvas { 
-            width: 100%; height: auto; background: #000; 
-            border: 2px solid #444; border-radius: 8px; 
-            cursor: crosshair; touch-action: none;
+    /* MOBILE CENTER CONTROL */
+    @media (max-width: 900px) { 
+        .main-container { 
+            flex-direction: column; 
+            align-items: center; /* Centers items horizontally on mobile */
+            padding: 10px;
+        } 
+        .sidebar { 
+            width: 100% !important; 
+            max-width: 450px;
+            order: 2; 
         }
-
-        .slot-btn { 
-            background: #333; padding: 12px; margin-bottom: 8px; 
-            border-radius: 6px; cursor: pointer; border: 2px solid transparent; 
+        .viewport { 
+            order: 1; 
+            width: 100%; 
+            display: flex;
+            flex-direction: column;
+            align-items: center; /* Centers the canvas specifically */
         }
-        .slot-btn.active { border-color: var(--blue); background: #1e3a50; }
-
-        .controls { margin-top: 15px; background: #111; padding: 15px; border-radius: 8px; }
-        input[type="range"] { width: 100%; margin: 10px 0; accent-color: var(--blue); }
-        
-        .btn { 
-            background: var(--blue); color: white; border: none; padding: 12px; 
-            width: 100%; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 10px;
+        canvas {
+            width: 95% !important; /* Forces fit to screen width */
+            max-width: 100%;
         }
-        .btn-download { background: #28a745; margin-top: 20px; }
+    }
+
+    .sidebar { width: 300px; background: var(--panel); padding: 20px; border-radius: 12px; height: fit-content; }
+    
+    .viewport { 
+        flex-grow: 1; 
+        text-align: center; 
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    canvas { 
+        width: 90%; /* Default desktop width */
+        max-width: 1080px; 
+        height: auto; 
+        background: #000; 
+        border: 1px solid #444; 
+        cursor: crosshair; 
+        touch-action: none; /* Prevents screen scrolling while dragging photo */
+    }
+
+    /* Rest of your button/slider styles... */
+    .slot-btn { background: #333; padding: 12px; margin-bottom: 8px; border-radius: 6px; cursor: pointer; border: 2px solid transparent; }
+    .slot-btn.active { border-color: var(--blue); background: #1e3a50; }
+    .controls { margin-top: 15px; background: #111; padding: 15px; border-radius: 8px; width: 100%; box-sizing: border-box;}
+    input[type="range"] { width: 100%; margin: 10px 0; accent-color: var(--blue); }
+    .btn { background: var(--blue); color: white; border: none; padding: 12px; width: 100%; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 10px;}
