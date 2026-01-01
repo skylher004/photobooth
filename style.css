@@ -36,7 +36,7 @@
         .sidebar { 
             width: 85% !important; 
             max-width: 450px;
-            order: 2; 
+            /* order: 2;  */
             padding: 0px 20px 0px 20px!important;
         }
         .viewport { 
@@ -98,3 +98,6 @@
     .controls { margin-top: 15px; background: #111; padding: 15px; border-radius: 8px; width: 100%; box-sizing: border-box;}
     input[type="range"] { width: 100%; margin: 10px 0; accent-color: var(--blue); }
     .btn { background: var(--blue); color: white; border: none; padding: 12px; width: 100%; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 10px;}
+#zoom-label{
+    font-size: 12px;
+}
