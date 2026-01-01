@@ -14,7 +14,7 @@
     
     .main-container { 
         display: flex; 
-        padding: 20px 0px 20px 20px; 
+        padding: 20px 20px 0px 20px; 
         gap: 20px; 
         width: 100%; 
         max-width: 1300px; 
@@ -31,10 +31,10 @@
         .main-container { 
             flex-direction: column; 
             align-items: center; /* Centers items horizontally on mobile */
-            padding: 10px;
+            padding: 5px 5px 0px 5px;
         } 
         .sidebar { 
-            width: 100% !important; 
+            width: 85% !important; 
             max-width: 450px;
             order: 2; 
             padding: 5px;
