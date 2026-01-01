@@ -8,8 +8,10 @@
         margin: 0; 
         padding: 0;
         display: flex; 
-        justify-content: center; 
+        /* Fix for mobile height shaking */
         min-height: 100vh;
+        min-height: 100dvh; 
+        overflow-x: hidden;
     }
     
     .main-container { 
@@ -38,6 +40,7 @@
             max-width: 450px;
             order: 2; 
             padding: 0px 20px 0px 20px!important;
+           
         }
         .viewport { 
             order: 1; 
@@ -46,6 +49,7 @@
             flex-direction: column;
             align-items: center; /* Centers the canvas specifically */
             margin-bottom: 0px;
+            box-sizing: border-box;
         }
         canvas {
             width: 100% !important; /* Forces fit to screen width */
