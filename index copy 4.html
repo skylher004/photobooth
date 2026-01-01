@@ -44,19 +44,22 @@
     const ctx = canvas.getContext('2d');
     const zoomRange = document.getElementById('zoomRange');
     
+    // Load Template
     const template = new Image();
     template.src = 'photobooth.png';
     let templateLoaded = false;
     template.onload = () => { templateLoaded = true; render(); };
+    template.onerror = () => { console.error("photobooth.png not found. Using fallback."); render(); };
 
     let activeIdx = 0;
     let photos = [null, null, null, null];
 
+    // Frame Coordinates (X, Y, Width, Height)
     const slots = [
-        { x: 45,  y: 42,  w: 605, h: 366 }, 
-        { x: 40,  y: 455, w: 317, h: 206 }, 
-        { x: 382, y: 455, w: 317, h: 206 }, 
-        { x: 723, y: 455, w: 317, h: 206 }  
+        { x: 45,  y: 42,  w: 605, h: 366 }, // Big Photo
+        { x: 40,  y: 455, w: 317, h: 206 }, // Small 1
+        { x: 382, y: 455, w: 317, h: 206 }, // Small 2
+        { x: 723, y: 455, w: 317, h: 206 }  // Small 3
     ];
     let states = slots.map(s => ({ x: s.x, y: s.y, scale: 1, minScale: 1 }));
 
@@ -64,6 +67,7 @@
         ctx.fillStyle = "#000";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         
+        // 1. Draw Uploaded Images
         photos.forEach((img, i) => {
             ctx.save();
             ctx.beginPath();
@@ -79,19 +83,32 @@
                 ctx.fillStyle = (i === activeIdx) ? "#009dff" : "#444";
                 ctx.font = "bold 20px Arial";
                 ctx.textAlign = "center";
-                ctx.fillText("TAP TO UPLOAD", slots[i].x + slots[i].w/2, slots[i].y + slots[i].h/2);
+                ctx.fillText("CLICK TO UPLOAD", slots[i].x + slots[i].w/2, slots[i].y + slots[i].h/2);
             }
             ctx.restore();
 
-            if (i === activeIdx && activeIdx !== -1) {
+            // Active Frame Highlight
+            if (i === activeIdx) {
                 ctx.strokeStyle = "#009dff";
                 ctx.lineWidth = 4;
                 ctx.strokeRect(slots[i].x, slots[i].y, slots[i].w, slots[i].h);
             }
         });
 
-        if(templateLoaded) ctx.drawImage(template, 0, 0, canvas.width, canvas.height);
+        // 2. Draw Template
+        if(templateLoaded) {
+            ctx.drawImage(template, 0, 0, canvas.width, canvas.height);
+        } else {
+            // Placeholder frame if image fails
+            ctx.strokeStyle = "white";
+            ctx.lineWidth = 2;
+            ctx.strokeRect(5, 5, canvas.width-10, canvas.height-10);
+            ctx.fillStyle = "white";
+            ctx.fillText("TEMPLATE OVERLAY MISSING", 800, 50);
+        }
     }
+
+    // --- Logic for selection, upload, and scaling ---
 
     function selectSlot(i) {
         activeIdx = i;
@@ -110,6 +127,7 @@
             const img = new Image();
             img.onload = () => {
                 photos[activeIdx] = img;
+                // Calculate Fit
                 const minS = Math.max(slots[activeIdx].w / img.width, slots[activeIdx].h / img.height);
                 states[activeIdx].minScale = minS;
                 states[activeIdx].scale = minS;
@@ -132,64 +150,42 @@
         if (s.y + h < slot.y + slot.h) s.y = slot.y + slot.h - h;
     }
 
+    // Interaction Events
     const getP = (e) => {
         const r = canvas.getBoundingClientRect();
-        const tx = e.touches ? e.touches[0].clientX : (e.clientX || e.pageX);
-        const ty = e.touches ? e.touches[0].clientY : (e.clientY || e.pageY);
+        const tx = e.touches ? e.touches[0].clientX : e.clientX;
+        const ty = e.touches ? e.touches[0].clientY : e.clientY;
         return { x: (tx - r.left) * (1080 / r.width), y: (ty - r.top) * (720 / r.height) };
     };
 
-    // --- MOBILE & DESKTOP FIXED CLICK LOGIC ---
-    let isDragging = false;
-    let startX, startY;
-    let lastMouseX, lastMouseY;
-
-    canvas.addEventListener('pointerdown', (e) => {
+    canvas.addEventListener('mousedown', (e) => {
         const p = getP(e);
-        startX = p.x;
-        startY = p.y;
-        lastMouseX = p.x;
-        lastMouseY = p.y;
-        isDragging = true;
-
-        // Immediately check if we hit a slot to make it active
         slots.forEach((s, i) => {
             if(p.x > s.x && p.x < s.x+s.w && p.y > s.y && p.y < s.y+s.h) {
                 selectSlot(i);
+                if(!photos[i]) document.getElementById('fileInput').click();
             }
         });
     });
 
-    window.addEventListener('pointermove', (e) => {
-        if (!isDragging || !photos[activeIdx]) return;
+    let down = false, lx, ly;
+    const onStart = (e) => { down = true; const p = getP(e); lx = p.x; ly = p.y; };
+    const onMove = (e) => {
+        if(!down || !photos[activeIdx]) return;
         const p = getP(e);
-        states[activeIdx].x += (p.x - lastMouseX);
-        states[activeIdx].y += (p.y - lastMouseY);
+        states[activeIdx].x += (p.x - lx);
+        states[activeIdx].y += (p.y - ly);
         constrain(activeIdx);
-        lastMouseX = p.x;
-        lastMouseY = p.y;
+        lx = p.x; ly = p.y;
         render();
-    });
+    };
 
-    window.addEventListener('pointerup', (e) => {
-        if (!isDragging) return;
-        const p = getP(e);
-        
-        // Calculate distance moved
-        const dist = Math.sqrt(Math.pow(p.x - startX, 2) + Math.pow(p.y - startY, 2));
-        
-        // If the user tapped (hardly moved) and frame is empty or active, upload!
-        if (dist < 5) {
-            slots.forEach((s, i) => {
-                if(p.x > s.x && p.x < s.x+s.w && p.y > s.y && p.y < s.y+s.h) {
-                    // Triggers file input
-                    document.getElementById('fileInput').click();
-                }
-            });
-        }
-        
-        isDragging = false;
-    });
+    canvas.addEventListener('mousedown', onStart);
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', () => down = false);
+    canvas.addEventListener('touchstart', (e) => { e.preventDefault(); onStart(e); }, {passive:false});
+    canvas.addEventListener('touchmove', (e) => { e.preventDefault(); onMove(e); }, {passive:false});
+    canvas.addEventListener('touchend', () => down = false);
 
     zoomRange.oninput = (e) => {
         const s = states[activeIdx], slot = slots[activeIdx];
@@ -201,15 +197,13 @@
         render();
     };
 
-    function resetActive() { 
-        if(photos[activeIdx]) {
-            const minS = Math.max(slots[activeIdx].w / photos[activeIdx].width, slots[activeIdx].h / photos[activeIdx].height);
-            states[activeIdx].scale = minS;
-            states[activeIdx].x = slots[activeIdx].x;
-            states[activeIdx].y = slots[activeIdx].y;
-            selectSlot(activeIdx);
-        }
-    }
+    function resetActive() { if(photos[activeIdx]) {
+        const minS = Math.max(slots[activeIdx].w / photos[activeIdx].width, slots[activeIdx].h / photos[activeIdx].height);
+        states[activeIdx].scale = minS;
+        states[activeIdx].x = slots[activeIdx].x;
+        states[activeIdx].y = slots[activeIdx].y;
+        selectSlot(activeIdx);
+    }}
 
     function download() {
         const old = activeIdx; activeIdx = -1; render();
@@ -224,5 +218,6 @@
 
     render();
 </script>
+
 </body>
 </html>
