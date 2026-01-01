@@ -37,7 +37,7 @@
             width: 85% !important; 
             max-width: 450px;
             order: 2; 
-            padding: 5px;
+            padding: 0px 20px 0px 20px!important;
         }
         .viewport { 
             order: 1; 
@@ -54,8 +54,8 @@
             display: flex;
             flex-direction: row;
             flex-wrap: wrap;
-            gap: 5px;
-            justify-content: center;
+            justify-content: space-between;
+            
             font-size: 12px;
         }
         .label-control {
