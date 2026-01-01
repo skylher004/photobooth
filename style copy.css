@@ -1,0 +1,45 @@
+body{
+    margin:0;
+    background:#111;
+    color:#fff;
+    font-family:Arial, sans-serif;
+    text-align:center;
+}
+
+#booth{
+    position:relative;
+    width:100%;
+    max-width:900px;
+    aspect-ratio:3/2;
+    margin:20px auto;
+    background:url('photobooth.png') center/contain no-repeat;
+    overflow:hidden;
+}
+
+/* LOCKED FRAMES */
+.frame{
+    position:absolute;
+    border:6px solid #fff;
+    overflow:hidden;
+}
+
+/* IMAGE */
+.frame img{
+    position:absolute;
+    top:0;
+    left:0;
+    touch-action:none;
+    user-select:none;
+}
+
+/* FRAME POSITIONS (900x600 TEMPLATE) */
+#f1{ left:40px; top:40px; width:520px; height:300px; }
+#f2{ left:40px; top:380px; width:240px; height:180px; }
+#f3{ left:330px; top:380px; width:240px; height:180px; }
+#f4{ left:620px; top:380px; width:240px; height:180px; }
+
+button{
+    margin:15px;
+    padding:12px 30px;
+    font-size:16px;
+}
