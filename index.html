@@ -73,10 +73,10 @@
     
     // Load Template
     const template = new Image();
-    template.src = 'PHOTOBOOTH.PNG';
+    template.src = 'photobooth.png';
     let templateLoaded = false;
     template.onload = () => { templateLoaded = true; render(); };
-    template.onerror = () => { console.error("PHOTOBOOTH.PNG not found. Using fallback."); render(); };
+    template.onerror = () => { console.error("photobooth.png not found. Using fallback."); render(); };
 
     let activeIdx = 0;
     let photos = [null, null, null, null];
