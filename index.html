@@ -3,60 +3,66 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Interactive 2026 Photobooth</title>
+    <title>Photobooth 2026 - Fix</title>
     <style>
-        :root { --blue: #009dff; --bg: #121212; }
-        body { font-family: 'Segoe UI', sans-serif; background: #333; color: white; margin: 0; display: flex; justify-content: center; }
+        :root { --blue: #009dff; --panel: #252525; }
+        body { font-family: sans-serif; background: #1a1a1a; color: white; margin: 0; display: flex; justify-content: center; }
         
-        .main-container { display: flex; flex-direction: row; padding: 20px; gap: 20px; width: 100%; max-width: 1400px; }
-        @media (max-width: 900px) { 
-            .main-container { flex-direction: column; align-items: center; } 
-            .sidebar { width: 100% !important; order: 2; }
-            .viewport { order: 1; width: 100%; }
-        }
+        .main-container { display: flex; padding: 20px; gap: 20px; width: 100%; max-width: 1300px; }
+        @media (max-width: 900px) { .main-container { flex-direction: column; } .sidebar { width: 100% !important; } }
 
-        .sidebar { width: 320px; background: #222; padding: 20px; border-radius: 15px; flex-shrink: 0; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+        .sidebar { width: 300px; background: var(--panel); padding: 20px; border-radius: 12px; height: fit-content; }
         .viewport { flex-grow: 1; text-align: center; }
 
-        .slot-btn { background: #444; padding: 12px; margin-bottom: 8px; border-radius: 8px; cursor: pointer; border: 2px solid transparent; transition: 0.2s; }
-        .slot-btn.active { border-color: var(--blue); background: #2d3e4d; font-weight: bold; }
+        canvas { 
+            width: 100%; height: auto; background: #000; 
+            border: 2px solid #444; border-radius: 8px; 
+            cursor: crosshair; touch-action: none;
+        }
 
-        canvas { width: 100%; height: auto; background: #000; border-radius: 10px; cursor: pointer; touch-action: none; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .slot-btn { 
+            background: #333; padding: 12px; margin-bottom: 8px; 
+            border-radius: 6px; cursor: pointer; border: 2px solid transparent; 
+        }
+        .slot-btn.active { border-color: var(--blue); background: #1e3a50; }
+
+        .controls { margin-top: 15px; background: #111; padding: 15px; border-radius: 8px; }
+        input[type="range"] { width: 100%; margin: 10px 0; accent-color: var(--blue); }
         
-        .controls { margin-top: 20px; padding: 15px; background: #111; border-radius: 10px; border: 1px solid #444; }
-        input[type="range"] { width: 100%; height: 25px; cursor: pointer; accent-color: var(--blue); }
-        
-        .btn-action { background: var(--blue); color: white; border: none; padding: 15px; width: 100%; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; font-size: 16px; }
-        label { display: block; margin-bottom: 10px; color: var(--blue); font-size: 12px; font-weight: bold; text-transform: uppercase; }
-        .hint { font-size: 11px; color: #888; margin-top: 10px; line-height: 1.4; }
+        .btn { 
+            background: var(--blue); color: white; border: none; padding: 12px; 
+            width: 100%; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 10px;
+        }
+        .btn-download { background: #28a745; margin-top: 20px; }
     </style>
 </head>
 <body>
 
 <div class="main-container">
     <div class="sidebar">
-        <h2 style="margin-top:0">CONTROLS</h2>
+        <h3>CONTROLS</h3>
         <div id="slot-list">
-            <div class="slot-btn active" id="btn-0" onclick="selectSlot(0)">1. TOP PHOTO (MAIN)</div>
-            <div class="slot-btn" id="btn-1" onclick="selectSlot(1)">2. BOTTOM LEFT</div>
-            <div class="slot-btn" id="btn-2" onclick="selectSlot(2)">3. BOTTOM CENTER</div>
-            <div class="slot-btn" id="btn-3" onclick="selectSlot(3)">4. BOTTOM RIGHT</div>
+            <div class="slot-btn active" onclick="selectSlot(0)">1. MAIN PHOTO</div>
+            <div class="slot-btn" onclick="selectSlot(1)">2. BOTTOM L</div>
+            <div class="slot-btn" onclick="selectSlot(2)">3. BOTTOM C</div>
+            <div class="slot-btn" onclick="selectSlot(3)">4. BOTTOM R</div>
         </div>
 
         <input type="file" id="fileInput" style="display:none" onchange="handleFile(event)">
-        <button class="btn-action" onclick="document.getElementById('fileInput').click()">UPLOAD SELECTED</button>
+        <button class="btn" onclick="document.getElementById('fileInput').click()">UPLOAD PHOTO</button>
 
         <div class="controls">
-            <label id="zoom-label">ZOOM: PHOTO 1</label>
+            <label id="zoom-label">ZOOM: FRAME 1</label>
             <input type="range" id="zoomRange" step="0.001" value="1">
-            <button class="btn-action" style="background:#d9534f" onclick="resetActive()">RESET FIT</button>
-            <button class="btn-action" style="background:#555; margin-top:20px;" onclick="download()">DOWNLOAD FINAL</button>
+            <button class="btn" style="background:#555" onclick="resetActive()">FIT IMAGE</button>
         </div>
-        <p class="hint">TIP: Click any photo frame on the right to select it instantly!</p>
+
+        <button class="btn btn-download" onclick="download()">DOWNLOAD FINAL</button>
     </div>
 
     <div class="viewport">
         <canvas id="boothCanvas" width="1080" height="720"></canvas>
+        <p style="color: #666; font-size: 12px; margin-top: 10px;">Click frames directly to select. Drag to move.</p>
     </div>
 </div>
 
@@ -64,33 +70,78 @@
     const canvas = document.getElementById('boothCanvas');
     const ctx = canvas.getContext('2d');
     const zoomRange = document.getElementById('zoomRange');
+    
+    // Load Template
     const template = new Image();
     template.src = 'PHOTOBOOTH.PNG';
+    let templateLoaded = false;
+    template.onload = () => { templateLoaded = true; render(); };
+    template.onerror = () => { console.error("PHOTOBOOTH.PNG not found. Using fallback."); render(); };
 
     let activeIdx = 0;
     let photos = [null, null, null, null];
 
-    // Coordinates mapping (Adjust these to match your exact holes)
-     const slots = [
+    // Frame Coordinates (X, Y, Width, Height)
+    const slots = [
         { x: 45,  y: 42,  w: 605, h: 366 }, // Big Photo
         { x: 40,  y: 455, w: 317, h: 206 }, // Small 1
         { x: 382, y: 455, w: 317, h: 206 }, // Small 2
         { x: 723, y: 455, w: 317, h: 206 }  // Small 3
     ];
-
     let states = slots.map(s => ({ x: s.x, y: s.y, scale: 1, minScale: 1 }));
 
-    template.onload = render;
+    function render() {
+        ctx.fillStyle = "#000";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // 1. Draw Uploaded Images
+        photos.forEach((img, i) => {
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(slots[i].x, slots[i].y, slots[i].w, slots[i].h);
+            ctx.clip();
 
-    // Switch between slots
+            if(img) {
+                const s = states[i];
+                ctx.drawImage(img, s.x, s.y, img.width * s.scale, img.height * s.scale);
+            } else {
+                ctx.fillStyle = "#222";
+                ctx.fillRect(slots[i].x, slots[i].y, slots[i].w, slots[i].h);
+                ctx.fillStyle = (i === activeIdx) ? "#009dff" : "#444";
+                ctx.font = "bold 20px Arial";
+                ctx.textAlign = "center";
+                ctx.fillText("CLICK TO UPLOAD", slots[i].x + slots[i].w/2, slots[i].y + slots[i].h/2);
+            }
+            ctx.restore();
+
+            // Active Frame Highlight
+            if (i === activeIdx) {
+                ctx.strokeStyle = "#009dff";
+                ctx.lineWidth = 4;
+                ctx.strokeRect(slots[i].x, slots[i].y, slots[i].w, slots[i].h);
+            }
+        });
+
+        // 2. Draw Template
+        if(templateLoaded) {
+            ctx.drawImage(template, 0, 0, canvas.width, canvas.height);
+        } else {
+            // Placeholder frame if image fails
+            ctx.strokeStyle = "white";
+            ctx.lineWidth = 2;
+            ctx.strokeRect(5, 5, canvas.width-10, canvas.height-10);
+            ctx.fillStyle = "white";
+            ctx.fillText("TEMPLATE OVERLAY MISSING", 800, 50);
+        }
+    }
+
+    // --- Logic for selection, upload, and scaling ---
+
     function selectSlot(i) {
         activeIdx = i;
         document.querySelectorAll('.slot-btn').forEach((b,idx) => b.classList.toggle('active', idx===i));
-        document.getElementById('zoom-label').innerText = `ZOOM: PHOTO ${i+1}`;
-        
-        // Update slider limits based on the specific photo's minScale
         zoomRange.min = states[i].minScale;
-        zoomRange.max = states[i].minScale * 3;
+        zoomRange.max = states[i].minScale * 4;
         zoomRange.value = states[i].scale;
         render();
     }
@@ -103,157 +154,96 @@
             const img = new Image();
             img.onload = () => {
                 photos[activeIdx] = img;
-                calculateMinScale(activeIdx);
-                render();
+                // Calculate Fit
+                const minS = Math.max(slots[activeIdx].w / img.width, slots[activeIdx].h / img.height);
+                states[activeIdx].minScale = minS;
+                states[activeIdx].scale = minS;
+                states[activeIdx].x = slots[activeIdx].x;
+                states[activeIdx].y = slots[activeIdx].y;
+                selectSlot(activeIdx);
             };
             img.src = f.target.result;
         };
         reader.readAsDataURL(file);
     }
 
-    function calculateMinScale(idx) {
-        const img = photos[idx];
-        const slot = slots[idx];
-        const scaleW = slot.w / img.width;
-        const scaleH = slot.h / img.height;
-        const minS = Math.max(scaleW, scaleH);
-        
-        states[idx].minScale = minS;
-        states[idx].scale = minS;
-        states[idx].x = slot.x;
-        states[idx].y = slot.y;
-        
-        selectSlot(idx); // Update slider UI
-    }
-
-    function constrainPosition(idx) {
-        const s = states[idx];
-        const slot = slots[idx];
-        const img = photos[idx];
+    function constrain(idx) {
+        const s = states[idx], slot = slots[idx], img = photos[idx];
         if(!img) return;
-
-        const currW = img.width * s.scale;
-        const currH = img.height * s.scale;
-
+        const w = img.width * s.scale, h = img.height * s.scale;
         if (s.x > slot.x) s.x = slot.x;
-        if (s.x + currW < slot.x + slot.w) s.x = slot.x + slot.w - currW;
+        if (s.x + w < slot.x + slot.w) s.x = slot.x + slot.w - w;
         if (s.y > slot.y) s.y = slot.y;
-        if (s.y + currH < slot.y + slot.h) s.y = slot.y + slot.h - currH;
+        if (s.y + h < slot.y + slot.h) s.y = slot.y + slot.h - h;
     }
 
-    function render() {
-        ctx.clearRect(0,0, canvas.width, canvas.height);
-        
-        photos.forEach((img, i) => {
-            if(!img) return;
-            ctx.save();
-            ctx.beginPath();
-            ctx.rect(slots[i].x, slots[i].y, slots[i].w, slots[i].h);
-            ctx.clip();
+    // Interaction Events
+    const getP = (e) => {
+        const r = canvas.getBoundingClientRect();
+        const tx = e.touches ? e.touches[0].clientX : e.clientX;
+        const ty = e.touches ? e.touches[0].clientY : e.clientY;
+        return { x: (tx - r.left) * (1080 / r.width), y: (ty - r.top) * (720 / r.height) };
+    };
 
-            const s = states[i];
-            ctx.drawImage(img, s.x, s.y, img.width * s.scale, img.height * s.scale);
-            ctx.restore();
-
-            // Highlight the ACTIVE slot on canvas
-            if (i === activeIdx) {
-                ctx.strokeStyle = '#009dff';
-                ctx.lineWidth = 4;
-                ctx.strokeRect(slots[i].x, slots[i].y, slots[i].w, slots[i].h);
-            }
-        });
-
-        ctx.drawImage(template, 0, 0, canvas.width, canvas.height);
-    }
-
-    // CLICK-TO-SELECT LOGIC
     canvas.addEventListener('mousedown', (e) => {
-        const p = getPos(e);
-        // Check if user clicked inside any of the slots
-        slots.forEach((slot, index) => {
-            if (p.x >= slot.x && p.x <= slot.x + slot.w &&
-                p.y >= slot.y && p.y <= slot.y + slot.h) {
-                selectSlot(index);
+        const p = getP(e);
+        slots.forEach((s, i) => {
+            if(p.x > s.x && p.x < s.x+s.w && p.y > s.y && p.y < s.y+s.h) {
+                selectSlot(i);
+                if(!photos[i]) document.getElementById('fileInput').click();
             }
         });
     });
 
-    // Touch Support for Click-to-Select
-    canvas.addEventListener('touchstart', (e) => {
-        const p = getPos(e);
-        slots.forEach((slot, index) => {
-            if (p.x >= slot.x && p.x <= slot.x + slot.w &&
-                p.y >= slot.y && p.y <= slot.y + slot.h) {
-                selectSlot(index);
-            }
-        });
-    }, {passive: false});
-
-    // Dragging Logic
-    let isDown = false; let lx, ly;
-
-    const getPos = (e) => {
-        const rect = canvas.getBoundingClientRect();
-        const cx = e.touches ? e.touches[0].clientX : e.clientX;
-        const cy = e.touches ? e.touches[0].clientY : e.clientY;
-        return {
-            x: (cx - rect.left) * (canvas.width / rect.width),
-            y: (cy - rect.top) * (canvas.height / rect.height)
-        };
-    };
-
-    const start = (e) => { isDown = true; const p = getPos(e); lx = p.x; ly = p.y; };
-    const end = () => isDown = false;
-    const move = (e) => {
-        if(!isDown || !photos[activeIdx]) return;
-        const p = getPos(e);
+    let down = false, lx, ly;
+    const onStart = (e) => { down = true; const p = getP(e); lx = p.x; ly = p.y; };
+    const onMove = (e) => {
+        if(!down || !photos[activeIdx]) return;
+        const p = getP(e);
         states[activeIdx].x += (p.x - lx);
         states[activeIdx].y += (p.y - ly);
-        constrainPosition(activeIdx);
+        constrain(activeIdx);
         lx = p.x; ly = p.y;
         render();
     };
 
-    canvas.addEventListener('mousedown', start);
-    window.addEventListener('mouseup', end);
-    window.addEventListener('mousemove', move);
-    canvas.addEventListener('touchstart', start, {passive: false});
-    window.addEventListener('touchend', end);
-    canvas.addEventListener('touchmove', (e) => { e.preventDefault(); move(e); }, {passive: false});
+    canvas.addEventListener('mousedown', onStart);
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', () => down = false);
+    canvas.addEventListener('touchstart', (e) => { e.preventDefault(); onStart(e); }, {passive:false});
+    canvas.addEventListener('touchmove', (e) => { e.preventDefault(); onMove(e); }, {passive:false});
+    canvas.addEventListener('touchend', () => down = false);
 
     zoomRange.oninput = (e) => {
-        const oldScale = states[activeIdx].scale;
-        const newScale = parseFloat(e.target.value);
-        const slot = slots[activeIdx];
-        const centerX = slot.x + slot.w / 2;
-        const centerY = slot.y + slot.h / 2;
-
-        states[activeIdx].x = centerX - (centerX - states[activeIdx].x) * (newScale / oldScale);
-        states[activeIdx].y = centerY - (centerY - states[activeIdx].y) * (newScale / oldScale);
-        states[activeIdx].scale = newScale;
-        constrainPosition(activeIdx);
+        const s = states[activeIdx], slot = slots[activeIdx];
+        const oldS = s.scale;
+        s.scale = parseFloat(e.target.value);
+        s.x = (slot.x + slot.w/2) - ((slot.x + slot.w/2) - s.x) * (s.scale / oldS);
+        s.y = (slot.y + slot.h/2) - ((slot.y + slot.h/2) - s.y) * (s.scale / oldS);
+        constrain(activeIdx);
         render();
     };
 
-    function resetActive() {
-        if(photos[activeIdx]) calculateMinScale(activeIdx);
-    }
+    function resetActive() { if(photos[activeIdx]) {
+        const minS = Math.max(slots[activeIdx].w / photos[activeIdx].width, slots[activeIdx].h / photos[activeIdx].height);
+        states[activeIdx].scale = minS;
+        states[activeIdx].x = slots[activeIdx].x;
+        states[activeIdx].y = slots[activeIdx].y;
+        selectSlot(activeIdx);
+    }}
 
     function download() {
-        // Remove blue highlight before download
-        const currentActive = activeIdx;
-        activeIdx = -1; 
-        render();
-        
+        const old = activeIdx; activeIdx = -1; render();
         setTimeout(() => {
             const link = document.createElement('a');
-            link.download = 'photobooth-2026.png';
-            link.href = canvas.toDataURL('image/png', 1.0);
+            link.download = 'photobooth_2026.png';
+            link.href = canvas.toDataURL();
             link.click();
-            activeIdx = currentActive; // Restore highlight
-            render();
+            activeIdx = old; render();
         }, 100);
     }
+
+    render();
 </script>
 
 </body>
