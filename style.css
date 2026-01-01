@@ -44,6 +44,13 @@
             width: 95% !important; /* Forces fit to screen width */
             max-width: 100%;
         }
+        #slot-list{
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+        }
+        
     }
 
     .sidebar { width: 300px; background: var(--panel); padding: 20px; border-radius: 12px; height: fit-content; }
@@ -57,7 +64,7 @@
     }
 
     canvas { 
-        width: 90%; /* Default desktop width */
+        width: 85%; /* Default desktop width */
         max-width: 1080px; 
         height: auto; 
         background: #000; 
