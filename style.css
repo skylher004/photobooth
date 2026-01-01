@@ -39,7 +39,7 @@
             width: 100% !important; /* Force full width to remove side gaps */
             max-width: none;
             order: 2; 
-            padding: 20px !important;
+            padding: 10px !important;
             border-radius: 0; /* Optional: makes it flush with screen bottom */
             box-sizing: border-box;
         }
@@ -67,7 +67,8 @@
             font-size: 11px;
         }
         .slot-btn{
-            flex: 1 1 40%; /* Allows buttons to sit 2x2 or 4x1 nicely */
+           /* flex: 1 1 40%;  Allows buttons to sit 2x2 or 4x1 nicely */
+            flex: 1 ; /* Allows buttons to sit 2x2 or 4x1 nicely */
             box-sizing: border-box;
             text-align: center;
             margin: 4px;
