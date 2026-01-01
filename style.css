@@ -1,5 +1,4 @@
-
-    :root { --blue: #009dff; --bg: #121212; --panel: #252525; }
+:root { --blue: #009dff; --bg: #121212; --panel: #252525; }
     
     body { 
         font-family: sans-serif; 
@@ -8,7 +7,7 @@
         margin: 0; 
         padding: 0;
         display: flex; 
-        /* Fix for mobile height shaking */
+        justify-content: center; /* Centers desktop view */
         min-height: 100vh;
         min-height: 100dvh; 
         overflow-x: hidden;
@@ -16,67 +15,67 @@
     
     .main-container { 
         display: flex; 
-        padding: 20px 20px 0px 20px; 
- 
+        padding: 20px; 
         width: 100%; 
         max-width: 1300px; 
         box-sizing: border-box;
     }
+
     .label-control{
         font-size: 12px;
         margin-bottom: 10px;
         font-weight: bold;
     }
 
-    /* MOBILE CENTER CONTROL */
+    /* MOBILE VIEW FIX - NO GAPS */
     @media (max-width: 900px) { 
         .main-container { 
             flex-direction: column; 
-            align-items: center; /* Centers items horizontally on mobile */
-            padding: 5px 5px 0px 5px;
+            align-items: center; 
+            padding: 0; /* Remove padding so canvas touches edges */
+            gap: 0;    /* Remove space between viewport and sidebar */
         } 
         .sidebar { 
-            width: 85% !important; 
-            max-width: 450px;
+            width: 100% !important; /* Force full width to remove side gaps */
+            max-width: none;
             order: 2; 
-            padding: 0px 20px 0px 20px!important;
-           
+            padding: 20px !important;
+            border-radius: 0; /* Optional: makes it flush with screen bottom */
+            box-sizing: border-box;
         }
         .viewport { 
             order: 1; 
             width: 100%; 
             display: flex;
             flex-direction: column;
-            align-items: center; /* Centers the canvas specifically */
+            align-items: center; 
             margin-bottom: 0px;
-            box-sizing: border-box;
+            padding: 0; /* Ensure no padding under canvas */
+            background: #000; /* Matches canvas for seamless look */
         }
         canvas {
-            width: 100% !important; /* Forces fit to screen width */
+            width: 100% !important; 
             max-width: 100%;
+            border: none; /* Remove border to kill 1px gap */
+            display: block; /* Removes baseline text gap */
         }
         #slot-list{
             display: flex;
             flex-direction: row;
             flex-wrap: wrap;
             justify-content: space-between;
-            font-size: 12px;
-        }
-        .label-control {
-            font-size: 12px;
+            font-size: 11px;
         }
         .slot-btn{
-            flex:1;
+            flex: 1 1 40%; /* Allows buttons to sit 2x2 or 4x1 nicely */
             box-sizing: border-box;
             text-align: center;
-            margin-bottom: 0;
-            margin: 5px;
-            padding: 12px 5px!important;
+            margin: 4px;
+            padding: 10px 2px !important;
         }
-        
-    }
 
-    .sidebar { width: 300px; background: var(--panel); padding: 20px; border-radius: 12px; height: fit-content; }
+    }
+    .sidebar { width: 300px; background: var(--panel); padding: 20px; border-radius: 12px; height: fit-content; transition: 0.3s; }
     
     .viewport { 
         flex-grow: 1; 
@@ -87,21 +86,19 @@
     }
 
     canvas { 
-        width: 85%; /* Default desktop width */
+        width: 85%; 
         max-width: 1080px; 
         height: auto; 
         background: #000; 
         border: 1px solid #444; 
         cursor: crosshair; 
-        touch-action: none; /* Prevents screen scrolling while dragging photo */
+        touch-action: none;
+        display: block;
     }
 
-    /* Rest of your button/slider styles... */
-    .slot-btn { background: #333; padding: 12px; margin-bottom: 8px; border-radius: 6px; cursor: pointer; border: 2px solid transparent; }
+    .slot-btn { background: #333; padding: 12px; margin-bottom: 8px; border-radius: 6px; cursor: pointer; border: 2px solid transparent; transition: 0.2s; }
     .slot-btn.active { border-color: var(--blue); background: #1e3a50; }
     .controls { margin-top: 15px; background: #111; padding: 15px; border-radius: 8px; width: 100%; box-sizing: border-box;}
     input[type="range"] { width: 100%; margin: 10px 0; accent-color: var(--blue); }
     .btn { background: var(--blue); color: white; border: none; padding: 12px; width: 100%; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 10px;}
-#zoom-label{
-    font-size: 12px;
-}
+    #zoom-label { font-size: 12px; }
