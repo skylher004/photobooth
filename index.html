@@ -39,6 +39,10 @@
         <p style="color: #666; font-size: 12px; margin-top: 10px;">Click frames directly to select. Drag to move.</p>
     </div>
 </div>
+<div id="loader-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; flex-direction: column; justify-content: center; align-items: center;">
+    <div class="spinner"></div>
+    <p style="margin-top: 20px; font-weight: bold; letter-spacing: 1px;">GENERATING HIGH-RES PHOTO...</p>
+</div>
 
 <script>
     const canvas = document.getElementById('boothCanvas');
@@ -212,18 +216,60 @@
         }
     }
 
-    function download() {
-        const old = activeIdx; activeIdx = -1; render();
-        setTimeout(() => {
-            const link = document.createElement('a');
-            link.download = 'photobooth_2026.png';
-            link.href = canvas.toDataURL();
-            link.click();
-            activeIdx = old; render();
-        }, 100);
-    }
+ 
+   function download() {
+    const loader = document.getElementById('loader-overlay');
+    
+    // 1. Show the Loading Spinner
+    loader.style.display = 'flex';
 
+    // Use setTimeout so the browser has time to show the spinner before the heavy math starts
+    setTimeout(() => {
+        try {
+            const scaleFactor = 2; 
+            const finalWidth = canvas.width * scaleFactor;
+            const finalHeight = canvas.height * scaleFactor;
+
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = finalWidth;
+            tempCanvas.height = finalHeight;
+            const tCtx = tempCanvas.getContext('2d');
+
+            tCtx.fillStyle = "#000";
+            tCtx.fillRect(0, 0, finalWidth, finalHeight);
+
+            photos.forEach((img, i) => {
+                if (!img) return;
+                tCtx.save();
+                tCtx.beginPath();
+                tCtx.rect(slots[i].x * scaleFactor, slots[i].y * scaleFactor, slots[i].w * scaleFactor, slots[i].h * scaleFactor);
+                tCtx.clip();
+
+                const s = states[i];
+                tCtx.drawImage(img, s.x * scaleFactor, s.y * scaleFactor, (img.width * s.scale) * scaleFactor, (img.height * s.scale) * scaleFactor);
+                tCtx.restore();
+            });
+
+            if (templateLoaded) {
+                tCtx.drawImage(template, 0, 0, finalWidth, finalHeight);
+            }
+
+            const link = document.createElement('a');
+            link.download = `NewYear2026_HD.png`;
+            link.href = tempCanvas.toDataURL('image/png', 1.0);
+            link.click();
+
+        } catch (err) {
+            console.error(err);
+            alert("Export failed.");
+        } finally {
+            // 2. Hide the Loading Spinner
+            loader.style.display = 'none';
+        }
+    }, 600); // 600ms delay ensures the spinner is visible before processing
+}
     render();
 </script>
 </body>
 </html>
+    
